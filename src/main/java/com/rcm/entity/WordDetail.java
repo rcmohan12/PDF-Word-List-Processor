@@ -6,7 +6,7 @@ public class WordDetail {
     public String translatedWord;
     public String exampleStatement;
     public String translatedExampleStatement;
-
+    public String article;
 
     public String getWord() {
         return word;
@@ -40,6 +40,14 @@ public class WordDetail {
         this.translatedExampleStatement = translatedExampleStatement;
     }
 
+    public String getArticle() {
+        return article;
+    }
+
+    public void setArticle(String article) {
+        this.article = article;
+    }
+
     @Override
     public String toString() {
         return "WordDetail{" +
@@ -47,6 +55,7 @@ public class WordDetail {
                 ", translatedWord='" + translatedWord + '\'' +
                 ", exampleStatement='" + exampleStatement + '\'' +
                 ", translatedExampleStatement='" + translatedExampleStatement + '\'' +
+                ", article='" + article + '\'' +
                 '}';
     }
 }

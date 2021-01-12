@@ -17,15 +17,18 @@ public class PDFReader {
         ClassLoader classLoader = PDFReader.class.getClassLoader();
         File file = new File(classLoader.getResource("A1.pdf").getFile());
         PDDocument document = PDDocument.load(file);
+
         //Instantiate PDFTextStripper class
         PDFTextStripper pdfStripper = new PDFTextStripper();
         pdfStripper.setStartPage( 9 );
         pdfStripper.setEndPage( 27 );
+
         //Retrieving text from PDF document
         //Max data that can be held by a string is INT.Max ~ 2 billion. But the practical value would depend on the heap space configured
         String[] text = pdfStripper.getText(document).split("\\.|\\?");
         document.close();
 
+        //method that extracts line data
         processLines(text);
 
     }
@@ -43,17 +46,16 @@ public class PDFReader {
             }
 
             WordDetail word = new WordDetail();
-            String arr[] = cleaned.split(" ", 2);
-
-            if(prevWord.length() != 0 && containsWord(str, prevWord)) {
-                word.setWord(prevWord);
+            if(cleaned.startsWith("der")
+                || cleaned.startsWith("die")
+                || cleaned.startsWith("das")) {
+                String arr[] = cleaned.split(" ", 3);
+                prevWord = updateWordObj(str, prevWord, word, arr[1].trim(), arr[2], arr[0].trim());
             } else {
-                word.setWord(arr[0]);
-                prevWord = arr[0].trim();
+                String arr[] = cleaned.split(" ", 2);
+                prevWord = updateWordObj(str, prevWord, word, arr[0], arr[1], "");
             }
 
-            word.setExampleStatement(arr[1].replaceAll("(?i)"+prevWord, "______"));
-            System.out.println(word);
             words.add(word);
 
         }
@@ -61,7 +63,24 @@ public class PDFReader {
 
     }
 
-    public static boolean containsWord(String inputString, String word) {
+    private static String updateWordObj(String str, String prevWord, WordDetail word, String root, String sentence, String article) {
+        if(prevWord.length() != 0 && containsPreviousWord(str, prevWord)) {
+            word.setWord(prevWord);
+        } else {
+            word.setWord(root);
+            prevWord = root;
+        }
+
+        word.setExampleStatement(sentence.replaceAll("(?i)"+prevWord, " ______ "));
+
+        word.setArticle(article);
+
+        System.out.println(word);
+
+        return prevWord;
+    }
+
+    public static boolean containsPreviousWord(String inputString, String word) {
 
         List<String> inputStringList = Arrays.asList(inputString.split(" "));
         return inputStringList.contains(word);
