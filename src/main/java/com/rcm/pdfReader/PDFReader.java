@@ -25,7 +25,7 @@ public class PDFReader {
 
         //Retrieving text from PDF document
         //Max data that can be held by a string is INT.Max ~ 2 billion. But the practical value would depend on the heap space configured
-        String[] text = pdfStripper.getText(document).split("\\.|\\?");
+        String[] text = pdfStripper.getText(document).split("\\.|\\?|: \\.\\.\\.|\t");
         document.close();
 
         //method that extracts line data
@@ -39,43 +39,63 @@ public class PDFReader {
         String prevWord = "";
 
         for(String str : text) {
-            String cleaned = str;
-            if(str.contains("Ab morgen")) { // Exception case
-                cleaned = str.substring(str.indexOf("ab"));
-                System.out.println(cleaned);
+            String cleaned = str.trim();
+
+            try {
+                if(str.contains("Ab morgen")) { // Exception case
+                    cleaned = str.substring(str.indexOf("ab"));
+                    System.out.println(cleaned);
+                }
+
+                WordDetail word = new WordDetail();
+                if(cleaned.startsWith("der")
+                        || cleaned.startsWith("die")
+                        || cleaned.startsWith("das")
+                        || cleaned.startsWith("der/die")) {
+                    String arr[] = cleaned.split(" ", 3);
+
+                    prevWord = updateWordObj(str, prevWord, word, arr[1].trim(), arr[2], arr[0].trim());
+
+                } else {
+                    String arr[] = cleaned.split(" ", 2);
+
+                    if(arr.length > 1) {
+                        prevWord = updateWordObj(str, prevWord, word, arr[0].trim(), arr[1], "");
+                    }
+
+                }
+
+                words.add(word);
+            } catch (Exception e) {
+                System.out.println("Failed to process this line :"+str);
             }
-
-            WordDetail word = new WordDetail();
-            if(cleaned.startsWith("der")
-                || cleaned.startsWith("die")
-                || cleaned.startsWith("das")) {
-                String arr[] = cleaned.split(" ", 3);
-                prevWord = updateWordObj(str, prevWord, word, arr[1].trim(), arr[2], arr[0].trim());
-            } else {
-                String arr[] = cleaned.split(" ", 2);
-                prevWord = updateWordObj(str, prevWord, word, arr[0], arr[1], "");
-            }
-
-            words.add(word);
-
         }
+
         return words;
 
     }
 
     private static String updateWordObj(String str, String prevWord, WordDetail word, String root, String sentence, String article) {
-        if(prevWord.length() != 0 && containsPreviousWord(str, prevWord)) {
-            word.setWord(prevWord);
-        } else {
-            word.setWord(root);
-            prevWord = root;
+        try {
+
+            if(prevWord.length() != 0 && containsPreviousWord(str, prevWord)) {
+                word.setWord(prevWord);
+                word.setExampleStatement(str.replaceAll("(?i)"+prevWord, " ______ "));
+            } else {
+                word.setWord(root);
+                prevWord = root;
+
+                word.setExampleStatement(sentence.replaceAll("(?i)"+prevWord, " ______ "));
+
+            }
+
+            word.setArticle(article);
+
+            System.out.println(word);
+
+        } catch (Exception e) {
+            System.out.println("Failed to construct the WordDetails object. ");
         }
-
-        word.setExampleStatement(sentence.replaceAll("(?i)"+prevWord, " ______ "));
-
-        word.setArticle(article);
-
-        System.out.println(word);
 
         return prevWord;
     }
@@ -83,7 +103,7 @@ public class PDFReader {
     public static boolean containsPreviousWord(String inputString, String word) {
 
         List<String> inputStringList = Arrays.asList(inputString.split(" "));
-        return inputStringList.contains(word);
+        return inputStringList.contains(word) || inputStringList.contains(word+".");
 
     }
 
