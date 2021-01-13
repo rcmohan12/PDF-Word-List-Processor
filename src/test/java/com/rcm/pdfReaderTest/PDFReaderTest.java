@@ -61,4 +61,10 @@ public class PDFReaderTest {
         Assert.assertEquals("Failed to extract the key word", "Dame", word.get(0).getWord());
     }
 
+    @Test
+    public void processLinesTest9() {
+        List<WordDetail> word = PDFReader.processLines( new String[] {"die Dame, -n \t Damen (an der Toilette)"});
+        Assert.assertEquals("Failed to extract the key word", "Dame", word.get(0).getWord());
+    }
+
 }
